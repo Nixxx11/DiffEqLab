@@ -1,22 +1,31 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.function.UnaryOperator;
+import java.util.function.BinaryOperator;
 
 public class Visualiser extends JFrame implements Runnable {
-    private final List<Line> lines;
-    private final UnaryOperator<Double> transformationX;
-    private final UnaryOperator<Double> transformationY;
+    private static final int TIME_PER_FRAME = 100;
+    private static final double DERIVATIVE_COEFFICIENT = 0.01;
+    private static final int POINT_RADIUS = 4;
 
-    public Visualiser(int width, int height, List<Line> lines,
-                      UnaryOperator<Double> transformationX, UnaryOperator<Double> transformationY) {
-        this.lines = lines;
-        this.transformationX = transformationX;
-        this.transformationY = transformationY;
+    private final int width;
+    private final int height;
+    private final List<Point> points;
+    private final BinaryOperator<Double> derivativeX;
+    private final BinaryOperator<Double> derivativeY;
+    private final boolean trace;
+
+    public Visualiser(int width, int height, List<Point> points,
+                      BinaryOperator<Double> derivativeX, BinaryOperator<Double> derivativeY, boolean trace) {
+        this.width = width;
+        this.height = height;
+        this.points = points;
+        this.derivativeX = derivativeX;
+        this.derivativeY = derivativeY;
+        this.trace = trace;
         this.setSize(width, height);
         this.setVisible(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
     }
 
     @Override
@@ -25,27 +34,29 @@ public class Visualiser extends JFrame implements Runnable {
             repaint();
             transform();
             try {
-                Thread.sleep(100);
+                Thread.sleep(TIME_PER_FRAME);
             } catch (InterruptedException ignored) {
             }
         }
     }
 
     private void transform() {
-        for (Line line : lines) {
-            line.x1 = transformationX.apply(line.x1);
-            line.y1 = transformationY.apply(line.y1);
-            line.x2 = transformationX.apply(line.x2);
-            line.y2 = transformationY.apply(line.y2);
+        for (Point point : points) {
+            double dx = derivativeX.apply(point.x, point.y) * DERIVATIVE_COEFFICIENT;
+            double dy = derivativeY.apply(point.x, point.y) * DERIVATIVE_COEFFICIENT;
+            point.x += dx;
+            point.y += dy;
         }
     }
 
     @Override
     public void paint(Graphics g) {
-        super.paint(g);
+        if (!trace) {
+            super.paint(g);
+        }
         g.setColor(Color.BLACK);
-        for (Line line : lines) {
-            g.drawLine((int) line.x1, (int) line.y1, (int) line.x2, (int) line.y2);
+        for (Point point : points) {
+            g.fillOval((int) point.x + width / 2, (int) -point.y + height / 2, POINT_RADIUS, POINT_RADIUS);
         }
     }
 }
