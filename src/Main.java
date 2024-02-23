@@ -15,7 +15,7 @@ public class Main {
                 -3, 4,
                 -1, 2
         );
-        Visualiser v = new Visualiser(1080, 720, cat, (x, y) -> x, (x, y) -> -y, false);
+        Visualiser v = new Visualiser(1080, 720, cat, (x, y) -> x, (x, y) -> -y, true);
         new Thread(v).start();
     }
 
